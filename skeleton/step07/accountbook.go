@@ -43,6 +43,8 @@ func (ab *AccountBook) AddItem(item *Item) error {
 	// SQLのINSERTを使ってデータベースに保存する
 	// ?の部分にcategoryやpriceの値が来る
 	const sqlStr = `INSERT INTO items(category, price) VALUES (?,?);`
+	_, err := ab.db.Exec(sqlStr, item.Category, item.Price)
+
 	if err != nil {
 		return err
 	}
@@ -57,10 +59,13 @@ func (ab *AccountBook) GetItems(limit int) ([]*Item, error) {
 	// ORDER BY id DESCでidの降順（大きい順）=最近追加したものが先にくる
 	// LIMITで件数を最大の取得する件数を絞る
 	const sqlStr = `SELECT * FROM items ORDER BY id DESC LIMIT ?`
+	rows, err := ab.db.Query(sqlStr, limit)
+
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close() // 関数終了時にCloseが呼び出される
+
+	defer rows.Close() // 関数終了時にCloseが呼び出される(defer -> 遅延実行)
 
 	var items []*Item
 	// 1つずつ取得した行をみる
@@ -69,6 +74,8 @@ func (ab *AccountBook) GetItems(limit int) ([]*Item, error) {
 		var item Item
 		// TODO:
 		// rows.Scanで取得した行からデータを取り出し、itemの各フィールドに入れる
+		err := rows.Scan(&item.ID, &item.Category, &item.Price)
+
 		if err != nil {
 			return nil, err
 		}
